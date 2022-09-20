@@ -5,3 +5,8 @@ elastic_package: elasticsearch-8.4.1-linux-x86_64.tar.gz
 kibana_version: "8.4.1"
 kibana_home: "/opt/kibana/{{ kibana_version }}"
 kibana_package: kibana-8.4.1-linux-x86_64.tar.gz
+clickhouse_version: "22.8.5.29"
+clickhouse_home: /opt/clickhouse/{{ clickhouse_version }}
+vector_version: "0.24.1"
+vector_home: /opt/vector/{{ vector_version }}
+lh_home: /opt/lh

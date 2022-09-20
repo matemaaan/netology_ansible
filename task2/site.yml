@@ -1,117 +1,303 @@
 ---
-- name: Install Java
+- name: Upload 
+  hosts: all
+  pre_tasks:
+    - name: Check that the clickhouse-client exists
+      stat:
+        path: "{{ playbook_dir}}/files/clickhouse-client-{{ clickhouse_version }}-amd64.tgz"
+      register: client_result
+      tags: clickhouse
+    - name: Check that the clickhouse-common-static exists
+      stat:
+        path: "{{ playbook_dir}}/files/clickhouse-common-static-{{ clickhouse_version }}-amd64.tgz"
+      register: common_result
+      tags: clickhouse
+    - name: Check that the clickhouse-common-static-dbg exists
+      stat:
+        path: "{{ playbook_dir}}/files/clickhouse-common-static-dbg-{{ clickhouse_version }}-amd64.tgz"
+      register: common_dbg_result
+      tags: clickhouse
+    - name: Check that the clickhouse-server exists
+      stat:
+        path: "{{ playbook_dir}}/files/clickhouse-server-{{ clickhouse_version }}-amd64.tgz"
+      register: server_result
+      tags: clickhouse
+    - name: Check that the vector exists
+      stat:
+        path: "{{ playbook_dir}}/files/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+      register: vector_result
+      tags: clickhouse
+    - name: Check that the lh exists
+      stat:
+        path: "{{ playbook_dir}}/files/lighthouse.zip"
+      register: lh_result
+      tags: clickhouse
+    - name: Upload tar.gz clickhouse-client from remote URL
+      get_url:
+        url: "https://packages.clickhouse.com/tgz/stable/clickhouse-client-{{ clickhouse_version}}-amd64.tgz"
+        dest: "{{ playbook_dir}}/files/clickhouse-client-{{ clickhouse_version }}-amd64.tgz"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_client
+      until: get_client is succeeded
+      when: not client_result.stat.exists
+      tags: clickhouse
+    - name: Upload tar.gz clickhouse-common-static from remote URL
+      get_url:
+        url: "https://packages.clickhouse.com/tgz/stable/clickhouse-common-static-{{ clickhouse_version}}-amd64.tgz"
+        dest: "{{ playbook_dir}}/files/clickhouse-common-static-{{ clickhouse_version }}-amd64.tgz"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_common
+      until: get_common is succeeded
+      when: not common_result.stat.exists
+      tags: clickhouse
+    - name: Upload tar.gz clickhouse-common-static-dbg from remote URL
+      get_url:
+        url: "https://packages.clickhouse.com/tgz/stable/clickhouse-common-static-dbg-{{ clickhouse_version}}-amd64.tgz"
+        dest: "{{ playbook_dir}}/files/clickhouse-common-static-dbg-{{ clickhouse_version }}-amd64.tgz"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_common_dbg
+      until: get_common_dbg is succeeded
+      when: not common_dbg_result.stat.exists
+      tags: clickhouse
+    - name: Upload tar.gz clickhouse-server from remote URL
+      get_url:
+        url: "https://packages.clickhouse.com/tgz/stable/clickhouse-server-{{ clickhouse_version}}-amd64.tgz"
+        dest: "{{ playbook_dir}}/files/clickhouse-server-{{ clickhouse_version }}-amd64.tgz"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_server
+      until: get_server is succeeded
+      when: not server_result.stat.exists
+      tags: clickhouse
+    - name: Upload tar.gz vector from remote URL
+      get_url:
+        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        dest: "{{ playbook_dir}}/files/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_vector
+      until: get_vector is succeeded
+      when: not vector_result.stat.exists
+      tags: clickhouse
+    - name: Upload tar.gz vector from remote URL
+      get_url:
+        url: "https://github.com/VKCOM/lighthouse/archive/refs/heads/master.zip"
+        dest: "{{ playbook_dir}}/files/lighthouse.zip"
+        mode: 0755
+        timeout: 60
+        force: true
+        validate_certs: false
+      register: get_lh
+      until: get_lh is succeeded
+      when: not lh_result.stat.exists
+      tags: clickhouse
+    - name: Upload client .tar.gz file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/clickhouse-client-{{ clickhouse_version }}-amd64.tgz"
+        dest: "/tmp/clickhouse-client-{{ clickhouse_version }}-amd64.tgz"
+      when: client_result.stat.exists
+      tags: clickhouse
+    - name: Upload common .tar.gz file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/clickhouse-common-static-{{ clickhouse_version }}-amd64.tgz"
+        dest: "/tmp/clickhouse-common-static-{{ clickhouse_version }}-amd64.tgz"
+      when: common_result.stat.exists
+      tags: clickhouse
+    - name: Upload common-dbg .tar.gz file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/clickhouse-common-static-dbg-{{ clickhouse_version }}-amd64.tgz"
+        dest: "/tmp/clickhouse-common-static-dbg-{{ clickhouse_version }}-amd64.tgz"
+      when: common_dbg_result.stat.exists
+      tags: clickhouse
+    - name: Upload server .tar.gz file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/clickhouse-server-{{ clickhouse_version }}-amd64.tgz"
+        dest: "/tmp/clickhouse-server-{{ clickhouse_version }}-amd64.tgz"
+      when: server_result.stat.exists
+      tags: clickhouse
+    - name: Upload vector .tar.gz file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        dest: "/tmp/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+      when: vector_result.stat.exists
+      tags: clickhouse
+    - name: Upload lh .zip file containing binaries from local storage
+      copy:
+        src: "{{ playbook_dir}}/files/lighthouse.zip"
+        dest: "/tmp/lighthouse.zip"
+      when: lh_result.stat.exists
+      tags: clickhouse  
+    - name: Create directrory for clickhouse-client
+      become: true
+      file:
+        state: directory
+        path: "{{ clickhouse_home }}/client"
+      tags: clickhouse
+    - name: Create directrory for clickhouse-common-static
+      become: true
+      file:
+        state: directory
+        path: "{{ clickhouse_home }}/common"
+      tags: clickhouse
+    - name: Create directrory for clickhouse-common-static-dbg
+      become: true
+      file:
+        state: directory
+        path: "{{ clickhouse_home }}/common_dbg"
+      tags: clickhouse
+    - name: Create directrory for clickhouse-server
+      become: true
+      file:
+        state: directory
+        path: "{{ clickhouse_home }}/server"
+      tags: clickhouse
+    - name: Create directrory for vector
+      become: true
+      file:
+        state: directory
+        path: "{{ vector_home }}"
+      tags: clickhouse
+    - name: Create directrory for lh
+      become: true
+      file:
+        state: directory
+        path: "{{ lh_home }}"
+      tags: clickhouse
+- name: Install Clickhouse
   hosts: all
   tasks:
-    - name: Set facts for Java 11 vars
-      set_fact:
-        java_home: "/opt/jdk/{{ java_jdk_version }}"
-      tags: java
-    - name: Upload .tar.gz file containing binaries from local storage
-      copy:
-        src: "./files/{{ java_oracle_jdk_package }}"
-        dest: "/tmp/jdk-{{ java_jdk_version }}.tar.gz"
-      register: download_java_binaries
-      until: download_java_binaries is succeeded
-      tags: java
-    - name: Ensure installation dir exists
-      become: true
-      file:
-        state: directory
-        path: "{{ java_home }}"
-      tags: java
-    - name: Extract java in the installation directory
+    - name: Check that the clickhouse exists
+      stat:
+        path: "/usr/bin/clickhouse"
+      register: clickhouse_result
+      tags: clickhouse
+    - name: Extract common-static in the installation directory
       become: true
       unarchive:
         copy: false
-        src: "/tmp/jdk-{{ java_jdk_version }}.tar.gz"
-        dest: "{{ java_home }}"
+        src: "/tmp/clickhouse-common-static-{{ clickhouse_version }}-amd64.tgz"
+        dest: "{{ clickhouse_home }}/common"
         extra_opts: [--strip-components=1]
-        creates: "{{ java_home }}/bin/java"
-      tags:
-        - java
-    - name: Export environment variables
+        creates: "{{ clickhouse_home }}/common/bin/clickhouse"
+      tags: clickhouse
+      when: not clickhouse_result.stat.exists
+    - name: Install common
       become: true
-      template:
-        src: jdk.sh.j2
-        dest: /etc/profile.d/jdk.sh
-      tags: java
-- name: Install Elasticsearch
-  hosts: elasticsearch
-  tasks:
-    - name: Upload tar.gz Elasticsearch from remote URL
-      get_url:
-        url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elastic_version }}-linux-x86_64.tar.gz"
-        dest: "./files/elasticsearch-{{ elastic_version }}-linux-x86_64.tar.gz"
-        mode: 0755
-        timeout: 60
-        force: true
-        validate_certs: false
-      register: get_elastic
-      until: get_elastic is succeeded
-      tags: elastic
-    - name: Upload .tar.gz file containing binaries from local storage
-      copy:
-        src: "./files/{{ elastic_package }}"
-        dest: "/tmp/elasticsearch-{{ elastic_version }}-linux-x86_64.tar.gz"
-    - name: Create directrory for Elasticsearch
-      become: true
-      file:
-        state: directory
-        path: "{{ elastic_home }}"
-      tags: elastic
-    - name: Extract Elasticsearch in the installation directory
+      shell: "{{ clickhouse_home }}/common/install/doinst.sh"
+      when: not clickhouse_result.stat.exists
+    - name: Extract common_dbg in the installation directory
       become: true
       unarchive:
         copy: false
-        src: "/tmp/elasticsearch-{{ elastic_version }}-linux-x86_64.tar.gz"
-        dest: "{{ elastic_home }}"
+        src: "/tmp/clickhouse-common-static-dbg-{{ clickhouse_version }}-amd64.tgz"
+        dest: "{{ clickhouse_home }}/common_dbg"
         extra_opts: [--strip-components=1]
-        creates: "{{ elastic_home }}/bin/elasticsearch"
-      tags:
-        - elastic
-    - name: Set environment Elastic
+        creates: "{{ clickhouse_home }}/common_dbg/bin/clickhouse"
+      tags: clickhouse
+      when: not clickhouse_result.stat.exists
+    - name: Install common_dbg
       become: true
-      template:
-        src: templates/elk.sh.j2
-        dest: /etc/profile.d/elk.sh
-      tags: elastic
-- name: Install Kibana
-  hosts: elasticsearch
-  tasks:
-    - name: Upload tar.gz Kibana from remote URL
-      get_url:
-        url: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-linux-x86_64.tar.gz"
-        dest: "./files/kibana-{{ kibana_version }}-linux-x86_64.tar.gz"
-        mode: 0755
-        timeout: 60
-        force: true
-        validate_certs: false
-      register: get_kibana
-      until: get_kibana is succeeded
-      tags: kibana
-    - name: Upload .tar.gz file containing binaries from local storage
-      copy:
-        src: "./files/{{ kibana_package }}"
-        dest: "/tmp/kibana-{{ kibana_version }}-linux-x86_64.tar.gz"
-    - name: Create directrory for Kibana
-      become: true
-      file:
-        state: directory
-        path: "{{ kibana_home }}"
-      tags: kibana
-    - name: Extract Kibana in the installation directory
+      shell: "{{ clickhouse_home }}/common_dbg/install/doinst.sh"
+      when: not clickhouse_result.stat.exists
+    - name: Extract server in the installation directory
       become: true
       unarchive:
         copy: false
-        src: "/tmp/kibana-{{ kibana_version }}-linux-x86_64.tar.gz"
-        dest: "{{ kibana_home }}"
+        src: "/tmp/clickhouse-server-{{ clickhouse_version }}-amd64.tgz"
+        dest: "{{ clickhouse_home }}/server"
         extra_opts: [--strip-components=1]
-        creates: "{{ kibana_home }}/bin/kibana"
-      tags:
-        - kibana
-    - name: Set environment Kibana
+        creates: "{{ clickhouse_home }}/server/bin/clickhouse"
+      tags: clickhouse
+      when: not clickhouse_result.stat.exists
+    - name: Extract vector in the installation directory
       become: true
-      template:
-        src: templates/kbn.sh.j2
-        dest: /etc/profile.d/kbn.sh
-      tags: kibana
+      unarchive:
+        copy: false
+        src: "/tmp/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        dest: "{{ vector_home }}"
+        extra_opts: [--strip-components=1]
+        creates: "{{ vector_home }}/bin/vector"
+      tags: clickhouse
+    - name: Install server
+      become: true
+      shell: "{{ clickhouse_home }}/server/install/doinst.sh"
+      when: not clickhouse_result.stat.exists
+    - name: Extract client in the installation directory
+      become: true
+      unarchive:
+        copy: false
+        src: "/tmp/clickhouse-client-{{ clickhouse_version }}-amd64.tgz"
+        dest: "{{ clickhouse_home }}/client"
+        extra_opts: [--strip-components=1]
+        creates: "{{ clickhouse_home }}/client/bin/clickhouse"
+      tags: clickhouse
+      when: not clickhouse_result.stat.exists
+    - name: Install client
+      become: true
+      shell: "{{ clickhouse_home }}/client/install/doinst.sh"
+      when: not clickhouse_result.stat.exists
+    - name: Install Nginx
+      become: true
+      apt:
+        name=nginx
+        state=latest
+    - name: "Delete /var/www/html folder"
+      become: true
+      file:
+        path: "/var/www/html"
+        state: "absent"
+    - name: Create directrory
+      become: true
+      file:
+        state: directory
+        path: "/var/www/html"
+      tags: clickhouse
+    - name: Extract lh in the installation directory
+      become: true
+      unarchive:
+        src: "/tmp/lighthouse.zip"
+        dest: "/var/www/html"
+        remote_src: yes
+      tags: clickhouse
+- name: start
+  hosts: all
+  post_tasks:
+    - name: start clickhouse-server
+      become: true
+      shell: "clickhouse-server --config-file=/etc/clickhouse-server/config.xml --daemon"
+    - name: create link vector
+      become: true
+      file: 
+        src: "{{ vector_home }}/vector-x86_64-unknown-linux-musl/bin/vector"
+        dest: "/usr/bin/vector"
+        state: link
+    - name: Create directrory for vector
+      become: true
+      file:
+        state: directory
+        path: "/etc/vector"
+    - name: copy config vector
+      become: true
+      file: 
+        src: "{{ vector_home }}/vector-x86_64-unknown-linux-musl/config/vector.toml"
+        dest: "/etc/vector/vector.toml"
+        state: link
+    - name: add vector
+      become: true
+      shell: "cp -av {{ vector_home }}/vector-x86_64-unknown-linux-musl/etc/systemd/vector.service /etc/systemd/system"
+    - name: start vector
+      become: true
+      shell: "/usr/bin/vector > /dev/null &"
